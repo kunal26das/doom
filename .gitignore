@@ -1,0 +1,13 @@
+.DS_Store
+.gradle
+.kotlin
+build/
+*/build/
+local.properties
+.idea
+captures
+xcuserdata
+*.xcworkspace/xcshareddata/
+iosApp/Pods
+iosApp/iosApp.xcodeproj/project.xcworkspace/
+Thumbs.db
