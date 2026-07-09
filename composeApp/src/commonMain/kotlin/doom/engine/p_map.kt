@@ -569,11 +569,6 @@ fun PTR_SlideTraverse(`in`: intercept_t): Boolean {
 // This is a kludgy mess.
 //
 fun P_SlideMove(mo: mobj_t) {
-    val leadx: fixed_t
-    val leady: fixed_t
-    val trailx: fixed_t
-    val traily: fixed_t
-
     slidemo = mo
     var hitcount = 0
 
