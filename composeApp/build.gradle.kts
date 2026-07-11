@@ -12,6 +12,9 @@ kotlin {
         namespace = "com.kunal26das.doom"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
+        // Compose Multiplatform resources (the bundled WAD) ride through
+        // Android resources/assets of this KMP library module.
+        androidResources.enable = true
     }
 
     jvm()
