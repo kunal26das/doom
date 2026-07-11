@@ -104,7 +104,7 @@ fun R_DrawColumn() {
         // Re-map color indices from wall texture column
         //  using a lighting/special effects LUT.
         screens[0][dest] =
-            colormaps[dc_colormap + (dc_source[dc_source_ofs + ((frac shr FRACBITS) and 127)].toInt() and 0xFF)]
+            colormaps[dc_colormap + dc_source.srcByte(dc_source_ofs + ((frac shr FRACBITS) and 127))]
 
         dest += SCREENWIDTH
         frac += fracstep
@@ -149,7 +149,7 @@ fun R_DrawColumnLow() {
         // Hack. Does not work corretly.
         // *dest2 = *dest = dc_colormap[dc_source[(frac>>FRACBITS)&127]];
         val pixel =
-            colormaps[dc_colormap + (dc_source[dc_source_ofs + ((frac shr FRACBITS) and 127)].toInt() and 0xFF)]
+            colormaps[dc_colormap + dc_source.srcByte(dc_source_ofs + ((frac shr FRACBITS) and 127))]
         screens[0][dest2] = pixel
         screens[0][dest] = pixel
         dest += SCREENWIDTH
@@ -299,7 +299,7 @@ fun R_DrawTranslatedColumn() {
         // *dest = dc_colormap[dc_translation[dc_source[frac>>FRACBITS]]];
         screens[0][dest] = colormaps[dc_colormap +
             (translationtables[dc_translation +
-                (dc_source[dc_source_ofs + (frac shr FRACBITS)].toInt() and 0xFF)].toInt() and 0xFF)]
+                dc_source.srcByte(dc_source_ofs + (frac shr FRACBITS))].toInt() and 0xFF)]
         dest += SCREENWIDTH
 
         frac += fracstep
@@ -401,7 +401,7 @@ fun R_DrawSpan() {
         // Lookup pixel from flat texture tile,
         //  re-index using light/colormap.
         screens[0][dest] =
-            colormaps[ds_colormap + (ds_source[ds_source_ofs + spot].toInt() and 0xFF)]
+            colormaps[ds_colormap + ds_source.srcByte(ds_source_ofs + spot)]
         dest++
 
         // Next step in u,v.
@@ -448,10 +448,10 @@ fun R_DrawSpanLow() {
         // Lowres/blocky mode does it twice,
         //  while scale is adjusted appropriately.
         screens[0][dest] =
-            colormaps[ds_colormap + (ds_source[ds_source_ofs + spot].toInt() and 0xFF)]
+            colormaps[ds_colormap + ds_source.srcByte(ds_source_ofs + spot)]
         dest++
         screens[0][dest] =
-            colormaps[ds_colormap + (ds_source[ds_source_ofs + spot].toInt() and 0xFF)]
+            colormaps[ds_colormap + ds_source.srcByte(ds_source_ofs + spot)]
         dest++
 
         xfrac += ds_xstep
@@ -633,4 +633,15 @@ fun R_DrawViewBorder() {
 
     // ?
     V_MarkRect(0, 0, SCREENWIDTH, SCREENHEIGHT - SBARHEIGHT)
+}
+
+/**
+ * Vanilla's drawers index lump bytes unchecked; slightly-negative frac at a
+ * sprite post's top edge (or an undersized flat) makes C read a few bytes of
+ * adjacent zone memory -- a harmless garbage pixel on DOS. Emulate that
+ * tolerated out-of-bounds read by clamping into the lump.
+ */
+internal fun ByteArray.srcByte(i: Int): Int {
+    val ci = if (i < 0) 0 else if (i >= size) size - 1 else i
+    return this[ci].toInt() and 0xFF
 }
