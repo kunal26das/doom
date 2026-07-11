@@ -93,7 +93,7 @@ fun doomKeyFor(e: KeyEvent): Int = when (e.key) {
     Key.F10 -> KEY_F10
     Key.F11 -> KEY_F11
     Key.F12 -> KEY_F12
-    Key.Pause -> KEY_PAUSE
+    Key.Break -> KEY_PAUSE
     Key.A -> 'a'.code
     Key.B -> 'b'.code
     Key.C -> 'c'.code

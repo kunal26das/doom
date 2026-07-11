@@ -482,7 +482,7 @@ fun ST_Responder(ev: event_t): Boolean {
             // if (gameskill != sk_nightmare) {
 
             // 'dqd' cheat for toggleable god mode
-            if (cht_CheckCheat(cheat_god, ev.data1)) {
+            if (cht_CheckCheat(cheat_god, ev.data1) != 0) {
                 plyr.cheats = plyr.cheats xor CF_GODMODE
                 if ((plyr.cheats and CF_GODMODE) != 0) {
                     if (plyr.mo != null)
@@ -494,7 +494,7 @@ fun ST_Responder(ev: event_t): Boolean {
                     plyr.message = STSTR_DQDOFF
             }
             // 'fa' cheat for killer fucking arsenal
-            else if (cht_CheckCheat(cheat_ammonokey, ev.data1)) {
+            else if (cht_CheckCheat(cheat_ammonokey, ev.data1) != 0) {
                 plyr.armorpoints = 200
                 plyr.armortype = 2
 
@@ -507,7 +507,7 @@ fun ST_Responder(ev: event_t): Boolean {
                 plyr.message = STSTR_FAADDED
             }
             // 'kfa' cheat for key full ammo
-            else if (cht_CheckCheat(cheat_ammo, ev.data1)) {
+            else if (cht_CheckCheat(cheat_ammo, ev.data1) != 0) {
                 plyr.armorpoints = 200
                 plyr.armortype = 2
 
@@ -523,7 +523,7 @@ fun ST_Responder(ev: event_t): Boolean {
                 plyr.message = STSTR_KFAADDED
             }
             // 'mus' cheat for changing music
-            else if (cht_CheckCheat(cheat_mus, ev.data1)) {
+            else if (cht_CheckCheat(cheat_mus, ev.data1) != 0) {
 
                 val buf = CharArray(3)
                 val musnum: Int
@@ -532,16 +532,16 @@ fun ST_Responder(ev: event_t): Boolean {
                 cht_GetParam(cheat_mus, buf)
 
                 if (gamemode == commercial) {
-                    musnum = mus_runnin + (buf[0] - '0') * 10 + buf[1] - '0' - 1
+                    musnum = mus_runnin + (buf[0] - '0') * 10 + (buf[1] - '0') - 1
 
-                    if ((buf[0] - '0') * 10 + buf[1] - '0' > 35)
+                    if ((buf[0] - '0') * 10 + (buf[1] - '0') > 35)
                         plyr.message = STSTR_NOMUS
                     else
                         S_ChangeMusic(musnum, 1)
                 } else {
                     musnum = mus_e1m1 + (buf[0] - '1') * 9 + (buf[1] - '1')
 
-                    if ((buf[0] - '1') * 9 + buf[1] - '1' > 31)
+                    if ((buf[0] - '1') * 9 + (buf[1] - '1') > 31)
                         plyr.message = STSTR_NOMUS
                     else
                         S_ChangeMusic(musnum, 1)
@@ -549,8 +549,8 @@ fun ST_Responder(ev: event_t): Boolean {
             }
             // Simplified, accepting both "noclip" and "idspispopd".
             // no clipping mode cheat
-            else if (cht_CheckCheat(cheat_noclip, ev.data1)
-                || cht_CheckCheat(cheat_commercial_noclip, ev.data1)
+            else if (cht_CheckCheat(cheat_noclip, ev.data1) != 0
+                || cht_CheckCheat(cheat_commercial_noclip, ev.data1) != 0
             ) {
                 plyr.cheats = plyr.cheats xor CF_NOCLIP
 
@@ -561,7 +561,7 @@ fun ST_Responder(ev: event_t): Boolean {
             }
             // 'behold?' power-up cheats
             for (i in 0 until 6) {
-                if (cht_CheckCheat(cheat_powerup[i], ev.data1)) {
+                if (cht_CheckCheat(cheat_powerup[i], ev.data1) != 0) {
                     if (plyr.powers[i] == 0)
                         P_GivePower(plyr, i)
                     else if (i != pw_strength)
@@ -574,17 +574,17 @@ fun ST_Responder(ev: event_t): Boolean {
             }
 
             // 'behold' power-up menu
-            if (cht_CheckCheat(cheat_powerup[6], ev.data1)) {
+            if (cht_CheckCheat(cheat_powerup[6], ev.data1) != 0) {
                 plyr.message = STSTR_BEHOLD
             }
             // 'choppers' invulnerability & chainsaw
-            else if (cht_CheckCheat(cheat_choppers, ev.data1)) {
+            else if (cht_CheckCheat(cheat_choppers, ev.data1) != 0) {
                 plyr.weaponowned[wp_chainsaw] = true
                 plyr.powers[pw_invulnerability] = 1  // (C: = true)
                 plyr.message = STSTR_CHOPPERS
             }
             // 'mypos' for player position
-            else if (cht_CheckCheat(cheat_mypos, ev.data1)) {
+            else if (cht_CheckCheat(cheat_mypos, ev.data1) != 0) {
                 // (C: sprintf(buf, "ang=0x%x;x,y=(0x%x,0x%x)", ...))
                 val buf = "ang=0x${players[consoleplayer].mo!!.angle.toString(16)};" +
                     "x,y=(0x${players[consoleplayer].mo!!.x.toUInt().toString(16)}," +
@@ -594,7 +594,7 @@ fun ST_Responder(ev: event_t): Boolean {
         }
 
         // 'clev' change-level cheat
-        if (cht_CheckCheat(cheat_clev, ev.data1)) {
+        if (cht_CheckCheat(cheat_clev, ev.data1) != 0) {
             val buf = CharArray(3)
             val epsd: Int
             val map: Int
@@ -603,7 +603,7 @@ fun ST_Responder(ev: event_t): Boolean {
 
             if (gamemode == commercial) {
                 epsd = 0
-                map = (buf[0] - '0') * 10 + buf[1] - '0'
+                map = (buf[0] - '0') * 10 + (buf[1] - '0')
             } else {
                 epsd = buf[0] - '0'
                 map = buf[1] - '0'

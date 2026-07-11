@@ -7,9 +7,10 @@ package doom.engine
 
 // background and foreground screen numbers
 // different from other modules.
-// (private: st_lib.kt owns its own BG/FG values, 4/0.)
-private const val BG = 1
-private const val FG = 0
+// (C: file-scope "#define BG 1 / #define FG 0"; renamed HU_BG/HU_FG here
+//  because st_lib.kt owns the public BG/FG values, 4/0.)
+private const val HU_BG = 1
+private const val HU_FG = 0
 
 // font stuff
 const val HU_CHARERASE = KEY_BACKSPACE
@@ -135,7 +136,7 @@ fun HUlib_drawTextLine(
             w = patchWidth(l.f!![c - l.sc])
             if (x + w > SCREENWIDTH)
                 break
-            V_DrawPatchDirect(x, l.y, FG, l.f!![c - l.sc])
+            V_DrawPatchDirect(x, l.y, HU_FG, l.f!![c - l.sc])
             x += w
         } else {
             x += 4
@@ -148,7 +149,7 @@ fun HUlib_drawTextLine(
     if (drawcursor
         && x + patchWidth(l.f!!['_'.code - l.sc]) <= SCREENWIDTH
     ) {
-        V_DrawPatchDirect(x, l.y, FG, l.f!!['_'.code - l.sc])
+        V_DrawPatchDirect(x, l.y, HU_FG, l.f!!['_'.code - l.sc])
     }
 }
 

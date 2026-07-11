@@ -15,13 +15,18 @@
 
 package doom.engine
 
-// doomdef.h: DOOM version
-const val VERSION = 110
+// doomdef.h: DOOM version -- VERSION (109, DOS v1.9 for IWAD demo
+// compatibility) is defined in g_game.kt; the startup banners below use it.
 
 var devparm = false      // started game with -devparm
 var nomonsters = false   // checkparm of -nomonsters
 var respawnparm = false  // checkparm of -respawn
 var fastparm = false     // checkparm of -fast
+
+// C: char basedefault[1024]; -- default file. The C code built a platform
+// path ($HOME/.doomrc / c:/doomdata/default.cfg); here the name is a plain
+// key into the host-provided persistence (I_Read/WriteFileHook).
+var basedefault = "default.cfg"
 
 var singletics = false   // debug flag to cancel adaptiveness
 

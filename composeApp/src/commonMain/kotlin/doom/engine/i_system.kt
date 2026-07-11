@@ -17,6 +17,11 @@ fun I_GetTime(): Int {
     return ((ms * TICRATE) / 1000).toInt()
 }
 
+// C i_system.c: I_Tactile -- UNUSED (no-op stub, kept because P_DamageMobj
+// calls it for the local player exactly as vanilla does).
+fun I_Tactile(on: Int, off: Int, total: Int) {
+}
+
 fun I_Error(error: String): Nothing {
     println("Error: $error")
     throw DoomError(error)

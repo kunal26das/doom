@@ -18,13 +18,13 @@ fun SCRAMBLE(a: Int): Int =
  * C: { unsigned char* sequence; unsigned char* p; }
  *
  * `sequence` is a MUTABLE byte buffer (cht_CheckCheat types parameter keys into
- * the 0x00 slots and cht_GetParam reads/clears them again); it is built from a
- * String whose char codes are the original byte values (0x01 marks the start of
- * a parameter run, 0xff ends the sequence). `p` is an index into `sequence`;
- * -1 stands for the initial NULL pointer of the C static initializers.
+ * the 0x00 slots and cht_GetParam reads/clears them again); the IntArray values
+ * are the original byte values (0x01 marks the start of a parameter run, 0xff
+ * ends the sequence). `p` is an index into `sequence`; -1 stands for the NULL
+ * pointer of the C static initializers `{ seq, 0 }` (the `p` constructor
+ * argument is that initializer's 0 == NULL).
  */
-class cheatseq_t(sequence: String) {
-    val sequence: IntArray = IntArray(sequence.length) { sequence[it].code }
+class cheatseq_t(val sequence: IntArray, p: Int) {
     var p: Int = -1
 }
 

@@ -2,6 +2,7 @@ package com.kunal26das.doom
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.get
+import kotlinx.cinterop.set
 import platform.AVFAudio.AVAudioEngine
 import platform.AVFAudio.AVAudioFormat
 import platform.AVFAudio.AVAudioPCMBuffer
@@ -19,7 +20,7 @@ actual fun startAudioOutput(render: (FloatArray) -> Unit): Boolean {
 
         val engine = AVAudioEngine()
         val player = AVAudioPlayerNode()
-        val format = AVAudioFormat(sampleRate = OUTPUT_RATE.toDouble(), channels = 2u)
+        val format = AVAudioFormat(standardFormatWithSampleRate = OUTPUT_RATE.toDouble(), channels = 2u)
         engine.attachNode(player)
         engine.connect(player, engine.mainMixerNode, format)
         engine.startAndReturnError(null)

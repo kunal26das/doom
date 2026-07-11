@@ -245,7 +245,8 @@ private var markpointnum = 0 // next point to be assigned
 private var followplayer = 1 // specifies whether to follow the player around
 
 // C: cheat_amap_seq[] = { 0xb2, 0x26, 0x26, 0x2e, 0xff }  ("iddt" scrambled)
-private val cheat_amap = cheatseq_t("\u00b2\u0026\u0026\u002e\u00ff")
+private val cheat_amap_seq = intArrayOf(0xb2, 0x26, 0x26, 0x2e, 0xff)
+private val cheat_amap = cheatseq_t(cheat_amap_seq, 0)
 
 private var stopped = true
 
