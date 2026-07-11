@@ -353,7 +353,8 @@ fun M_ReadSaveStrings() {
             LoadMenu[i].status = 0
             continue
         }
-        savegamestrings[i] = handle.str(0, SAVESTRINGSIZE)
+        // (C read() reads at most SAVESTRINGSIZE bytes; short files read less)
+        savegamestrings[i] = handle.str(0, minOf(SAVESTRINGSIZE, handle.size))
         LoadMenu[i].status = 1
     }
 }
