@@ -4,6 +4,8 @@ A faithful port of the original **DOOM (1993)** engine to pure Kotlin, running o
 **Android, iOS, Web (Wasm), and Desktop** from a single codebase with
 [Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/).
 
+**▶ Play it in your browser: [kunal26das.github.io/doom](https://kunal26das.github.io/doom/)**
+
 This is a line-by-line translation of id Software's released engine source
 (`linuxdoom-1.10`), preserving the original renderer (BSP, visplanes, fuzz
 effect, screen-melt), the complete game simulation (all monsters, weapons,
