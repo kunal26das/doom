@@ -25,5 +25,6 @@ actual fun frameToImageBitmap(pixels: IntArray): ImageBitmap {
     flip = flip xor 1
     val bmp = bitmaps[flip]
     bmp.installPixels(info, bytes, SCREENWIDTH * 4)
+    noteFramePresented()
     return bmp.asComposeImageBitmap()
 }

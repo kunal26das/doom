@@ -6,6 +6,7 @@ import kotlinx.browser.document
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    installRenderWatchdog()
     ComposeViewport(document.body!!) {
         App()
     }

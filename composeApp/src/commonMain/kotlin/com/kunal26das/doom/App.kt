@@ -30,6 +30,7 @@ import doom.engine.D_DoomStep
 import doom.engine.DoomError
 import doom.engine.I_VideoSink
 import doom.engine.soundDriver
+import kotlinx.coroutines.CancellationException
 
 /**
  * Boots the engine and drives it at display refresh rate on the UI thread
@@ -52,7 +53,14 @@ fun App() {
             soundDriver = mixer
             startAudioOutput(mixer::render)
 
-            I_VideoSink = { px -> frame = frameToImageBitmap(px) }
+            I_VideoSink = { px ->
+                // A transient presentation failure (Skiko/GL hiccup) must
+                // drop the frame, not unwind the whole game loop.
+                try {
+                    frame = frameToImageBitmap(px)
+                } catch (_: RuntimeException) {
+                }
+            }
 
             D_DoomMain(listOf(wad), emptyList())
 
@@ -62,6 +70,10 @@ fun App() {
             }
         } catch (e: DoomError) {
             crash = e.message
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            crash = "Engine crashed: $e"
         }
     }
 
