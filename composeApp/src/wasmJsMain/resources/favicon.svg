@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>DOOM</title>
+  <defs>
+    <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1ad"/>
+      <stop offset="0.45" stop-color="#d6aa55"/>
+      <stop offset="1" stop-color="#80502a"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="#110e0c"/>
+  <path d="M12 12h28l14 12v25L40 59H12Z" fill="#741f15"/>
+  <path d="M10 7h28l14 12v25L38 54H10Zm13 12v22h10l7-6V25l-7-6Z"
+        fill="url(#metal)" fill-rule="evenodd"/>
+  <path d="M10 7h28l14 12h-6L36 11H14v39l-4 4Z" fill="#ffe3a0"/>
+  <path d="m23 19 4 4v14l-4 4Zm10 22 7-6V25l4 2v11l-9 7H19l4-4Z"
+        fill="#4b3321"/>
+  <path d="M14 55h29l-5 4H14Z" fill="#bd3c20"/>
+</svg>

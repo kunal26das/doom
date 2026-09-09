@@ -1,0 +1,32 @@
+package doom.engine
+
+public const val SCREENWIDTH: Int = 320
+public const val SCREENHEIGHT: Int = 200
+public const val TICRATE: Int = 35
+public const val KEY_RIGHTARROW: Int = 0xae
+public const val KEY_LEFTARROW: Int = 0xac
+public const val KEY_UPARROW: Int = 0xad
+public const val KEY_DOWNARROW: Int = 0xaf
+public const val KEY_ESCAPE: Int = 27
+public const val KEY_ENTER: Int = 13
+public const val KEY_TAB: Int = 9
+public const val KEY_F1: Int = 0x80 + 0x3b
+public const val KEY_F2: Int = 0x80 + 0x3c
+public const val KEY_F3: Int = 0x80 + 0x3d
+public const val KEY_F4: Int = 0x80 + 0x3e
+public const val KEY_F5: Int = 0x80 + 0x3f
+public const val KEY_F6: Int = 0x80 + 0x40
+public const val KEY_F7: Int = 0x80 + 0x41
+public const val KEY_F8: Int = 0x80 + 0x42
+public const val KEY_F9: Int = 0x80 + 0x43
+public const val KEY_F10: Int = 0x80 + 0x44
+public const val KEY_F11: Int = 0x80 + 0x57
+public const val KEY_F12: Int = 0x80 + 0x58
+public const val KEY_BACKSPACE: Int = 127
+public const val KEY_PAUSE: Int = 0xff
+public const val KEY_EQUALS: Int = 0x3d
+public const val KEY_MINUS: Int = 0x2d
+public const val KEY_RSHIFT: Int = 0x80 + 0x36
+public const val KEY_RCTRL: Int = 0x80 + 0x1d
+public const val KEY_RALT: Int = 0x80 + 0x38
+public const val KEY_LALT: Int = KEY_RALT
