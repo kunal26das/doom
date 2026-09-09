@@ -1,0 +1,36 @@
+Third-party notices
+===================
+
+DOOM engine
+-----------
+
+The engine contains code derived from linuxdoom-1.10 and its original lookup
+tables and algorithms.
+
+Original code (C) 1993-1996 id Software, Inc., released under the GNU GPL v2.
+
+The GNU General Public License version 2 is provided in LICENSE. Porting
+conventions and original C vocabulary are documented in PORTING.md.
+
+Gradle launchers
+---------------
+
+gradlew:
+Copyright © 2015 the original authors.
+
+gradlew.bat:
+Copyright 2015 the original author or authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use these files except in compliance with the License.
+You may obtain a copy of the License at
+
+     https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+SPDX-License-Identifier: Apache-2.0
