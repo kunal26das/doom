@@ -1,8 +1,5 @@
 package com.kunal26das.doom
 
-import com.kunal26das.doom.data.GameFileRepository
-import com.kunal26das.doom.domain.BuiltInGameSelection
-import com.kunal26das.doom.domain.ImportedGameSelection
 import kotlinx.browser.localStorage
 import kotlin.random.Random
 import kotlin.test.AfterTest
@@ -86,24 +83,6 @@ class BrowserFileRepositoryTest {
     }
 
     @Test
-    fun gameNamespacesPersistIndependentlyAndFollowImportedContent() {
-        val files = BrowserFileRepository(keyPrefix)
-        val wad = minimalWad()
-        val demo = GameFileRepository(files, BuiltInGameSelection)
-        val imported = GameFileRepository(files, ImportedGameSelection("doom.wad", wad))
-        demo.write("doomsav0.dsg", byteArrayOf(1))
-        imported.write("doomsav0.dsg", byteArrayOf(2))
-
-        val reopened = BrowserFileRepository(keyPrefix)
-        val renamed = GameFileRepository(reopened, ImportedGameSelection("renamed.wad", wad))
-        val different = GameFileRepository(reopened, ImportedGameSelection("doom.wad", wad + byteArrayOf(1)))
-
-        assertContentEquals(byteArrayOf(1), GameFileRepository(reopened, BuiltInGameSelection).read("doomsav0.dsg"))
-        assertContentEquals(byteArrayOf(2), renamed.read("doomsav0.dsg"))
-        assertNull(different.read("doomsav0.dsg"))
-    }
-
-    @Test
     fun corruptEncodingReportsFailureWithoutChangingOtherSaves() {
         val corruptKey = keyPrefix + "doomsav0.dsg"
         localStorage.setItem(corruptKey, "!not-base64!")
@@ -114,19 +93,5 @@ class BrowserFileRepositoryTest {
 
         assertEquals("!not-base64!", localStorage.getItem(corruptKey))
         assertContentEquals(byteArrayOf(7), BrowserFileRepository(keyPrefix).read("doomsav1.dsg"))
-    }
-
-    private fun minimalWad(): ByteArray {
-        val names = listOf("PLAYPAL", "COLORMAP", "TEXTURE1", "PNAMES", "M_DOOM", "E1M1")
-        return ByteArray(12 + names.size * 16).apply {
-            "IWAD".encodeToByteArray().copyInto(this)
-            this[4] = names.size.toByte()
-            this[8] = 12
-            names.forEachIndexed { index, name ->
-                val entry = 12 + index * 16
-                this[entry] = 12
-                name.encodeToByteArray().copyInto(this, entry + 8)
-            }
-        }
     }
 }

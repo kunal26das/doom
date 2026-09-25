@@ -10,7 +10,9 @@ internal class PlaneRendererState {
 
     var ceilingfunc: ((Int, Int) -> Unit)? = null
 
-    val visplanes by lazy(LazyThreadSafetyMode.NONE) { Array(MAXVISPLANES) { VisiblePlane() } }
+    val visplanes by lazy(LazyThreadSafetyMode.NONE) {
+        ArrayList<VisiblePlane>(MAXVISPLANES).apply { repeat(MAXVISPLANES) { add(VisiblePlane()) } }
+    }
 
     var lastvisplane = 0
 

@@ -9,14 +9,10 @@ import io.github.kunal26das.startup.initializerKey
 
 
 internal val applicationStartup = StartupManifest {
-    lazyInitializer<FileStorageInitializer> { FileStorageInitializer() }
-    metaData<ImportedGameStorageInitializer> { ImportedGameStorageInitializer() }
+    metaData<FileStorageInitializer> { FileStorageInitializer() }
 }
 
 internal fun initializeApplication(context: StartupContext): GameDependencies {
     val startup = Startup.install(context, applicationStartup)
-    return GameDependencies(
-        startup.initializeComponent(initializerKey<FileStorageInitializer>()),
-        startup.initializeComponent(initializerKey<ImportedGameStorageInitializer>()),
-    )
+    return GameDependencies(startup.initializeComponent(initializerKey<FileStorageInitializer>()))
 }

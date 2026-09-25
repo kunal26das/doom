@@ -8,10 +8,10 @@ import doom.engine.geometry.ANG90
 import doom.engine.geometry.ANGLETOFINESHIFT
 import doom.engine.geometry.BinaryAngle
 import doom.engine.geometry.FRACBITS
+import doom.engine.geometry.FineTangentTable
 import doom.engine.geometry.fixedMul
 import doom.engine.geometry.FixedPoint
 import doom.engine.geometry.finesine
-import doom.engine.geometry.finetangent
 import doom.engine.rendering.resources.getcolDATA
 import doom.engine.rendering.resources.rGetColumn
 import doom.engine.rendering.resources.textureheight
@@ -272,7 +272,7 @@ internal fun DoomEngineCore.rRenderSegLoop() {
 
         if (segtextured) {
             angle = (rwCenterangle + xtoviewangle[rwX].toUInt()) shr ANGLETOFINESHIFT
-            texturecolumn = rwOffset - fixedMul(finetangent[angle.toInt()], rwDistance)
+            texturecolumn = rwOffset - fixedMul(FineTangentTable[angle.toInt()], rwDistance)
             texturecolumn = texturecolumn shr FRACBITS
             index = rwScale shr LIGHTSCALESHIFT
 

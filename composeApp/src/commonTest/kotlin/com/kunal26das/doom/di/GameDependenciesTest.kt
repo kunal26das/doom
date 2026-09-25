@@ -6,26 +6,16 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.kunal26das.doom.presentation.GameHostViewModel
 import com.kunal26das.doom.presentation.GameViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class GameDependenciesTest {
     @Test
-    fun applicationRepositoriesDoNotShareHostOrGameLifetimes() = runTest {
-        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+    fun applicationRepositoriesDoNotShareHostOrGameLifetimes() {
         val stores = List(2) { ViewModelStore() }
-        val importedGames = GameDependenciesEmptyImportedGames()
-        val dependencies = GameDependencies(GameDependenciesUnusedFiles, importedGames)
+        val dependencies = GameDependencies(GameDependenciesUnusedFiles)
         try {
             val hosts = stores.map { store ->
                 ViewModelProvider.create(
@@ -34,13 +24,11 @@ class GameDependenciesTest {
                 )[GameHostViewModel::class]
             }
             assertNotSame(hosts[0], hosts[1])
-            testScheduler.runCurrent()
-            assertEquals(2, importedGames.loads)
-            val entries = hosts.map { assertNotNull(it.state.value.game) }
+            val entries = hosts.map { it.game.value }
             val models = entries.map { entry ->
                 ViewModelProvider.create(
                     entry.viewModelStore,
-                    viewModelFactory { initializer { dependencies.createViewModel(entry.selection) } },
+                    viewModelFactory { initializer { dependencies.createViewModel() } },
                 )[GameViewModel::class]
             }
             assertNotSame(models[0], models[1])
@@ -53,18 +41,14 @@ class GameDependenciesTest {
 
             assertEquals(1, firstClosed)
             assertEquals(0, secondClosed)
-            assertNotSame(entries[0], hosts[0].state.value.game)
-            assertSame(entries[1], hosts[1].state.value.game)
-            assertEquals(2, importedGames.loads, "Restart must reuse the repository without restoring again")
+            assertNotSame(entries[0], hosts[0].game.value)
+            assertSame(entries[1], hosts[1].game.value)
 
             stores[1].clear()
             assertEquals(1, secondClosed)
             assertEquals(1, firstClosed)
         } finally {
             stores.forEach(ViewModelStore::clear)
-            testScheduler.runCurrent()
-            Dispatchers.resetMain()
         }
     }
-
 }

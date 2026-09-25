@@ -109,8 +109,9 @@ internal var DoomEngineCore.ceilingline: MapLine?
 
 internal const val MAXSPECIALCROSS = 8
 
-internal val DoomEngineCore.spechit
+internal var DoomEngineCore.spechit
     get() = stateCollision.spechit
+    set(value) { stateCollision.spechit = value }
 internal var DoomEngineCore.numspechit
     get() = stateCollision.numspechit
     set(value) { stateCollision.numspechit = value }
@@ -222,6 +223,8 @@ internal fun DoomEngineCore.pitCheckLine(ld: MapLine): Boolean {
         tmdropoffz = lowfloor
 
     if (ld.special != 0) {
+        if (numspechit == spechit.size)
+            spechit = spechit.copyOf(spechit.size * 2)
         spechit[numspechit] = ld
         numspechit++
     }

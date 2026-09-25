@@ -8,13 +8,10 @@ complete runtime. Starting or restarting a session creates fresh engine state.
 
 ```mermaid
 flowchart TD
-    Host[Android / iOS / Desktop / Web entry points] --> App[App: lifecycle and saved-game startup]
+    Host[Android / iOS / Desktop / Web entry points] --> App[App: lifecycle and bundled-game startup]
     Host --> Startup[Startup: app-owned storage adapters]
     Startup --> DI[GameDependencies: repository and engine selection]
     App --> HostVM[GameHostViewModel and per-session ViewModelStore]
-    HostVM --> ImportPort[domain: ImportedGameRepository]
-    App --> ImportUI[OwnedGameScreen: demo choice and platform file picker]
-    ImportUI --> HostVM
     App --> DI
     App --> Screen[GameScreen and touch/keyboard controls]
     App --> VM[GameViewModel]
@@ -23,7 +20,6 @@ flowchart TD
     VM --> Session[domain: RunGameSession]
     Session --> Ports[domain: GameEngine / WadRepository / FrameClock]
     Data[composeApp data adapters] -. implements .-> Ports
-    Data -. implements .-> ImportPort
     Data --> Engine[engine: DoomEngine and DoomHost]
     Engine --> SessionPolicy[EngineSession: lifecycle policy]
     Engine --> Services[Scheduling, rendering, configuration and host services]
@@ -31,9 +27,8 @@ flowchart TD
     Data --> Platform[Platform storage, audio and resource APIs]
 ```
 
-- `:domain` owns application contracts, game selection, import validation and
-  session policy. It depends on Kotlin and coroutines, with no Compose, platform
-  or engine dependency.
+- `:domain` owns application contracts and session policy. It depends on Kotlin
+  and coroutines, with no Compose, platform or engine dependency.
 - `:engine` owns the original simulation, binary data structures, rendering and
   engine-owned host ports. It depends on Kotlin and coroutines, with no application or
   presentation dependency.
@@ -117,7 +112,7 @@ trigonometric tables in `geometry`, gamma tables in `rendering`, and strings in
 
 | Principle | Application |
 | --- | --- |
-| Single responsibility | The composition root selects platform repositories and engine adapters; screens render state and emit input; ViewModels own import/session presentation state; `RunGameSession` drives one session; repositories load or store; the adapter connects one engine to its host. |
+| Single responsibility | The composition root selects platform repositories and engine adapters; screens render state and emit input; ViewModels own session presentation state; `RunGameSession` drives one session; repositories load or store; the adapter connects one engine to its host. |
 | Open/closed | New WAD repositories, frame clocks, storage implementations and engines implement existing contracts and are selected in `GameDependencies`. |
 | Liskov substitution | Fake engines/repositories exercise the same startup, input, quit and cleanup contract as the real adapter. `close()` is safe after partial startup and repeated calls. |
 | Interface segregation | Resource loading, storage, frame pacing and engine lifecycle have separate small interfaces. Audio returns a resource handle with explicit cleanup. |
@@ -189,65 +184,30 @@ and rendering characterization kept intact.
 
 Each platform host explicitly calls `initializeApplication` before constructing
 the UI. The [startup](https://github.com/kunal26das/startup) library (3.0.1) runs
-`FileStorageInitializer` before `ImportedGameStorageInitializer` and caches only
-their lightweight, application-owned repositories. Native imported-game storage
-receives the same file adapter used for save/configuration files. Android's
+`FileStorageInitializer` eagerly and caches only its lightweight,
+application-owned file repository for save and configuration files. Android's
 adapter captures the application context, replacing the mutable global context
 previously assigned by the Activity. Android uses manual `Startup.install`, so
-these initializers do not need provider XML entries.
+the initializer does not need a provider XML entry.
 
-Initialization performs no file reads, database transactions or audio setup.
-WAD restoration stays asynchronous in the host ViewModel; Wasm uses ordinary
+Initialization performs no file reads or audio setup. Wasm uses ordinary
 initializers, never the unsupported blocking coroutine bridge. The returned
 `GameDependencies` factory is passed into `App`, keeps constructor injection,
 and creates fresh ViewModels, sessions and engine adapters. Startup lookups are
 confined to the outer bootstrap; domain, engine and presentation code do not
 depend on the library. Restart and lifecycle cleanup remain session-owned.
 
-`App` observes `GameHostViewModel`, which restores the last locally imported
-IWAD through the domain `ImportedGameRepository` port. A successful restore
-launches the remembered game automatically. Without saved data, `OwnedGameScreen`
-offers **PLAY DEMO**, which starts the bundled WAD, or **LOAD DOOM.WAD** through
-a platform file picker. The web launcher also accepts
-a local WAD dropped onto the page and exposes drag feedback through
-`WadDropState`. Browser file reading and drag events stay in the platform adapter;
-both picker and drop emit the same name/bytes callback to the host ViewModel.
-Native targets retain the picker without advertising unsupported drop input.
-The bundled resource is selected explicitly. The current checked-in `doom1.wad`
-is the Ultimate DOOM data supplied in earlier project work; its filename and the
-legacy PLAY DEMO label do not describe its edition. This architecture change does
-not replace or add game assets.
+`App` observes `GameHostViewModel`, which starts the bundled `doom1.wad`
+immediately. There is no game-file selection screen, file picker or drop target;
+every session uses the bundled resource. The current checked-in `doom1.wad` is the
+Ultimate DOOM data supplied in earlier project work; its filename does not
+describe its edition. This architecture change does not replace or add game assets.
 
-The host ViewModel depends only on the repository interface.
-`GameDependencies.createHostViewModel()` injects the initialized platform repository:
-Web uses IndexedDB with binary `ArrayBuffer` records; Android, iOS and desktop
-use `FileImportedGameRepository` with the platform's atomic file writes on an
-I/O dispatcher. A versioned record stores the display name and WAD together,
-and restoration validates the WAD again. The file is never uploaded.
-
-`ImportedGameSelection` bounds data to 64 MB, validates the IWAD
-identifier, directory/lump bounds, required Doom assets and a supported map
-style, and copies the bytes into an owned snapshot. A successful import is
-remembered before launching. If persistence fails, the ViewModel retains the
-validated selection and exposes **PLAY FOR THIS VISIT** to launch it in memory.
-A failed restore returns to the import screen with an error; it does not silently
-substitute another game. Cancellation is propagated rather than shown as an error.
-
-`GameHostViewModel.playDemo()` selects `BuiltInGameSelection`
-without writing to the imported-game repository. The separately declared
-selection retains the same bundled resource and storage namespace. An existing
-remembered WAD
-therefore remains available for automatic startup on the next visit.
-
-`GameHostViewModel` owns an optional `GameEntry`, with a separate child ViewModel
-store for each session. A restart reuses the selected WAD, clears the previous
-store and creates a fresh entry. **CHOOSE GAME** clears the running entry and
-returns to the demo/import screen; the remembered WAD is replaced only when
-another import is successfully stored. The composition root supplies the selected WAD
-repository, engine adapter and game-specific file repository. Resources remain
-cached across lifecycle resumes. Imported saves and configuration use a stable
-content-derived `wad-…-` prefix. The bundled selection retains its existing
-storage namespace.
+`GameHostViewModel` owns the current `GameEntry`, with a separate child ViewModel
+store for each session. A restart clears the previous store and creates a fresh
+entry. The composition root supplies the bundled WAD repository, engine adapter
+and platform file repository. Resources remain cached across lifecycle resumes.
+Saves and configuration keep the bundled game's existing unprefixed storage names.
 
 ## Lifecycle and threading
 
@@ -288,9 +248,8 @@ processing a large elapsed-time batch once their pixels are complete. A delayed
 browser frame cannot force the melt to scan millions of already-finished ticks.
 A failed or exited game remains terminal for its `GameViewModel`. The screen
 then shows **RESTART**, which asks `GameHostViewModel` to create a fresh session
-and engine, and **CHOOSE GAME**, which returns to the demo/import screen. Both
-actions are hidden during startup and gameplay. A failure in one instance must not prevent
-another from starting.
+and engine. It is hidden during startup and gameplay. A failure in one instance
+must not prevent another from starting.
 
 ## Presentation and data ownership
 
@@ -382,8 +341,8 @@ package/name migration. Historical results are not a suppression-cleanup pass
 or a physical-device test.
 
 Domain and ViewModel tests cover frame ownership, cancellation/resume, input
-gating, terminal failures and quit. Import/storage tests cover remembered
-startup, structural validation, persistence failure, replacement and cleanup.
+gating, terminal failures and quit. Host ViewModel tests cover immediate bundled
+startup, restart and session cleanup.
 Engine tests characterize complete bundled demo playback, independent engines,
 invalid archives/options, fixed-point behavior and host cleanup. Canonical demo
 expectations live in `BundledDemoRegressionTest` and `InstanceIsolationTest` and
@@ -408,8 +367,7 @@ from the implementation being tested.
 
 Earlier campaign smoke checks loaded and rendered each map in a locally supplied
 Ultimate DOOM WAD; they did not complete a campaign playthrough. Earlier browser
-checks exercised file import, drag/drop, remembered startup, resize stress and an
-explicit context-loss recovery action. Those records do not establish the
+checks exercised resize stress and an explicit context-loss recovery action. Those records do not establish the
 current refactor's results or multi-hour stability on every browser.
 
 Remaining work includes narrowing gameplay/collision/rasterizer dependencies,

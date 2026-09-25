@@ -178,8 +178,8 @@ internal fun DoomEngineCore.rFindPlane(planeHeight: FixedPoint, picnum: Int, pla
     if (check < lastvisplane)
         return check
 
-    if (lastvisplane == MAXVISPLANES)
-        iError("R_FindPlane: no more visplanes")
+    if (lastvisplane == visplanes.size)
+        visplanes.add(VisiblePlane())
 
     lastvisplane++
 
@@ -232,6 +232,9 @@ internal fun DoomEngineCore.rCheckPlane(plane: Int, start: Int, stop: Int): Int 
         return pl
     }
 
+    if (lastvisplane == visplanes.size)
+        visplanes.add(VisiblePlane())
+
     visplanes[lastvisplane].height = visplanes[pl].height
     visplanes[lastvisplane].picnum = visplanes[pl].picnum
     visplanes[lastvisplane].lightlevel = visplanes[pl].lightlevel
@@ -279,9 +282,6 @@ internal fun DoomEngineCore.rDrawPlanes() {
 
     if (dsP > MAXDRAWSEGS)
         iError("R_DrawPlanes: drawsegs overflow ($dsP)")
-
-    if (lastvisplane > MAXVISPLANES)
-        iError("R_DrawPlanes: visplane overflow ($lastvisplane)")
 
     if (lastopening > MAXOPENINGS)
         iError("R_DrawPlanes: opening overflow ($lastopening)")

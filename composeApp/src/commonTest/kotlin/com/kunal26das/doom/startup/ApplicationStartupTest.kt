@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 
 class ApplicationStartupTest {
     @Test
-    fun eagerImportedGameStorageResolvesItsFileDependencyOnEveryPlatform() {
+    fun eagerFileStorageIsTheOnlyStartupComponentOnEveryPlatform() {
         StartupPlanner.validate(applicationStartup)
 
         val plan = StartupPlanner.plan(
@@ -16,9 +16,6 @@ class ApplicationStartupTest {
             emptySet(),
         )
 
-        assertEquals(
-            listOf(initializerKey<FileStorageInitializer>(), initializerKey<ImportedGameStorageInitializer>()),
-            plan.order,
-        )
+        assertEquals(listOf(initializerKey<FileStorageInitializer>()), plan.order)
     }
 }

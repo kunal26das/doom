@@ -1,13 +1,14 @@
 # Project audit and architecture refactor
 
-Updated: 2026-09-17
+Updated: 2026-09-25
 
 Project: `doom`
 
 The initial application audit used commit `701369f`. This update describes the
 subsequent engine refactor, type-file cleanup, package/name migration and
 suppression cleanup in the current working tree, including earlier project changes
-that remain in place.
+that remain in place. The latest update fixes three renderer/collision bounds
+failures and removes the game-file launcher so the bundled game always starts.
 Current build/test verification and earlier runtime checks are recorded separately below.
 
 ## Outcome and scope
@@ -74,9 +75,8 @@ issues; it does not remove the remaining shared-core algorithm dependencies.
 
 No game assets are added or replaced by this architecture change. The current
 bundled `doom1.wad` already contains Ultimate DOOM data from earlier project
-work. Its filename does not indicate its edition. `BuiltInGameSelection` is the
-separate selection type for the same bundled resource, which now launches
-automatically when there is no restorable imported game.
+work. Its filename does not indicate its edition. The bundled resource is the only
+game data the application launches.
 
 ## Engine findings addressed in this refactor
 
@@ -136,9 +136,9 @@ a correctness, reliability or maintainability issue warranting repair.
   must not replace that storage or retain host-frame buffers as immutable data.
 - Ordinary lifecycle suspension detaches and later resumes the same engine;
   failures and quit are terminal for that ViewModel. RESTART creates a fresh
-  session with the chosen WAD, and CHOOSE GAME explicitly opens the chooser.
-- Startup installs only application-owned file/import repository adapters.
-  File/database access remains deferred; ViewModels and engines are created
+  session with the bundled WAD.
+- Startup installs only the application-owned file repository adapter.
+  File access remains deferred; ViewModels and engines are created
   freshly by `GameDependencies`. Startup lookups stay outside domain, engine and
   presentation layers.
 - Menu commands and menu drawing are separate capabilities. The existing menu
@@ -155,17 +155,16 @@ a correctness, reliability or maintainability issue warranting repair.
 See [ARCHITECTURE.md](ARCHITECTURE.md) for service responsibilities, dependency
 flow, lifecycle ownership and extension points.
 
-## Existing asset selection and storage behavior
+## Bundled game startup and storage
 
-Startup restores a remembered imported game or launches the bundled Ultimate
-DOOM game automatically. The initial loading state does not display the WAD
-chooser. The chooser remains available through the explicit CHOOSE GAME action
-after quitting or an engine error; PLAY DOOM opens the bundled resource, while
-a platform file picker accepts imported IWADs. The previous PLAY DEMO label is
-removed. Web also supports drag/drop through the same
-reader and validation path. `BuiltInGameSelection` and `ImportedGameSelection`
-remain separate types, each in its own file. The engine menu supplies episode
-and skill choices for the selected data.
+Every launch starts the bundled Ultimate DOOM game directly. The game-file
+launcher has been removed: there is no CHOOSE GAME action, PLAY DOOM or
+LOAD DOOM.WAD button, drag/drop target or PLAY FOR THIS VISIT fallback. Its
+import path was removed with it, including the IWAD validator,
+`ImportedGameRepository` and its IndexedDB/file implementations,
+`BuiltInGameSelection`/`ImportedGameSelection`, the per-WAD storage prefix and
+the platform picker and drop adapters. After quitting or an engine error,
+RESTART is the only action. The engine menu supplies episode and skill choices.
 
 The existing `doom1.wad` is 12,408,292 bytes, has MD5
 `c4fe9fd920207691a9f493668e0a2083`, and contains all 36 map markers from E1M1
@@ -173,25 +172,16 @@ through E4M9. This identifies the bundled resource as full Ultimate DOOM data;
 the direct-start change does not add or replace assets. Checking the archive's
 identity and map directory does not establish a complete campaign playthrough.
 
-`GameHostViewModel` depends on `ImportedGameRepository`. Valid imported data are
-remembered locally and revalidated on restoration; Web uses binary IndexedDB
-records and native targets use versioned records with atomic file replacement.
-The import validator bounds images and directory work and screens structural
-and game-family problems. The import path does not upload selected files.
-If persistence fails, PLAY FOR THIS VISIT can use the validated in-memory data.
+`GameHostViewModel` owns only the current session entry. A restart replaces it
+and clears the previous session's ViewModels. The bundled game keeps its original
+unprefixed save and configuration names, so existing saves for it remain
+available. Data left by earlier imports is no longer read: a remembered WAD in
+the browser's `doom-imported-game` IndexedDB database or the native
+`imported-game.dat` file, and saves under `wad-…-` prefixes, remain on the device
+until the site or app data is cleared.
 
-Choosing the bundled resource does not replace the remembered import. Imported
-saves/configuration use content-derived prefixes, while the built-in selection
-retains its existing namespace. A failed restore starts the bundled game without
-requiring a file-selection step or deleting the remembered data. File import
-remains an explicit action.
-
-Direct-start verification passes 58 application JVM tests and 54 application
-browser tests, including automatic default selection, restored-import priority,
-restore-failure fallback and cancellation. The production Wasm build and
-architecture checks pass, with 413 Kotlin files checked for source layout. A
-fresh browser session opened directly into the running game without selecting a
-file; its New Game menu displayed all four episodes.
+Verification for this change is recorded under renderer and collision bounds
+fixes.
 
 ## Verification requirements and current status
 
@@ -452,7 +442,7 @@ The following coverage exists in source and defines the acceptance scope:
 
 | Coverage | Behaviors checked |
 | --- | --- |
-| Domain and presentation | Frame ownership, input gating, lifecycle cancellation/resume, failed/quit states, import validation, remembered startup and storage failures. |
+| Domain and presentation | Frame ownership, input gating, lifecycle cancellation/resume, failed/quit states, immediate bundled startup and restart cleanup. |
 | Engine lifetime | Single-use boot, immutable clock epoch, input gating, host detachment, music resume and primary/suppressed cleanup failures. |
 | Scheduling | Fake-clock polling, backlog rejection after input collection, bounded catch-up, command-ring wrap and copy isolation, single-tic ordering. |
 | World updates | Same-tic thinker insertion, deferred/self removal, level-time restoration and pause, deterministic player/thinker/special ordering. |
@@ -506,9 +496,8 @@ identification and computers with both mouse and touch input.
 
 The document now uses `touch-action: none` and `overscroll-behavior: none` to keep
 joystick and turning gestures in the application. This ancestor policy also
-constrains the Compose canvas, which otherwise permits browser panning. The
-launcher retains its Compose-managed scrolling; gameplay gestures do not depend
-on browser page scrolling.
+constrains the Compose canvas, which otherwise permits browser panning. Gameplay
+gestures do not depend on browser page scrolling.
 
 The browser application suite for that fix passed 53 automated tests, including
 four regressions that exercise the actual platform property with zero, one and five
@@ -559,6 +548,53 @@ changed gesture handling or simultaneous physical multitouch. Physical-device
 testing of sustained movement, turning and fire remains a separate verification
 step.
 
+## Renderer and collision bounds fixes
+
+A browser session stopped mid-game with a bare `kotlin.IndexOutOfBoundsException`.
+Kotlin/Wasm reports an out-of-range array element without a message, so the
+failing accesses were located on the JVM. The sweep loaded every bundled map at
+Ultra-Violence and rendered each standing subsector centroid at 16 angles in
+three view modes. From the same points it traced 2048-unit attack lines at
+128 angles. It also checked special-line contact at 8-unit grid positions for
+every monster radius. A second pass rendered 540,000 frames from random
+reachable positions. Three high-detail failures were found and are fixed:
+
+| Trigger | Original behavior | Port failure | Change |
+| --- | --- | --- | --- |
+| A wall column whose ray is at or just past parallel to the wall, usually with the view point within a fraction of a unit of the wall's line. `R_RenderSegLoop` then indexes 4096–4276 or 8146–8191. | `finetangent` has 4096 entries; later indexes read the following `finesine` table. | `finetangent` index out of bounds. Found on maps in every episode; 28 of the 540,000 random frames failed. | `FineTangentTable` continues indexes 4096–8191 into `finesine`, matching the original table layout. |
+| A frame needing more than 128 visplanes, such as E4M8 at (64, −3504), 157.5°, full screen. | `R_CheckPlane` wrote past the array; `R_DrawPlanes` then stopped with a visplane overflow error. | `visplanes[128]` out of bounds. | Visplane storage grows on demand; the overflow errors are removed. |
+| A thing touching more than eight special lines in one position check, such as a demon on the E1M5 teleporter star (ten WR Teleport lines) or near E4M1's scrolling walls, or a thing with the Spider Mastermind's 128-unit radius on several maps. | `spechit[8]` and later entries overwrote adjacent globals. | `spechit[8]` out of bounds. | The special-line list grows on demand and keeps every line. The original memory overwrite is not emulated. |
+
+Normal frames and moves are unchanged. All three bundled demos keep their
+simulation checkpoints and rendered hashes. `BundledMapLimitRegressionTest`
+reproduces each trigger and failed with the original exceptions before the fix;
+`FineTangentTableTest` checks the table continuation. After the fix, the
+centroid sweep's high-detail modes and a separate 1,080,000-frame random
+high-detail sweep raised no exceptions. Their largest measured counts were 74 of
+128 intercepts, 24 of 32 solid clip ranges and 4,626 of 20,480 openings.
+Drawsegs and vissprites reached their original limits, where the original code
+already drops extra entries.
+
+The sweep also reproduced two linuxdoom-1.10 low-detail defects that the
+existing raster and sprite-clipping tests preserve. `R_DrawColumnLow` doubles
+the shared `dc_x`, so a later sprite post or lower wall piece in the same column
+is drawn at a doubled column; sprites can then stop the game with
+`R_DrawColumn: … at …`. `R_DrawSpanLow` computes its count after doubling, so
+each span is drawn twice as wide and a full-screen low-detail frame can run past
+the framebuffer. The DOS executable used assembly column and span drawers that
+did not share these defects. They remain unchanged because the existing tests
+characterize them.
+
+Verification of the bounds fixes and launcher removal passes
+`verifyArchitecture`, `verifyKotlinSourceLayout` and 189 JVM tests (13 domain,
+57 application and 119 engine), including the unchanged demo checkpoints and
+rendered hashes, plus 29 browser adapter tests. All main and test sources compile
+for Wasm, as do the production Wasm executable and the Android sources. A
+development Wasm build served locally and opened in headless Chromium started
+directly in the game; quitting showed only RESTART, which started a fresh
+session. The Karma browser suites did not run in this environment because their
+test runner package could not be downloaded, and the iOS targets require macOS.
+
 ## Remaining findings and limits
 
 1. **P2 — Legacy subsystem coupling remains.** Actor behavior, collision,
@@ -569,8 +605,8 @@ step.
    work. Do not describe the complete engine as fully SOLID or cleanly layered.
 2. **P2 — Binary content validation is incomplete.** WAD directory bounds are
    validated, but map relationships and save/demo streams still assume valid
-   content. Structural import checks do not prove every record is safe. Dedicated
-   readers and malformed map/save/demo fixtures are needed for recoverable errors.
+   content. Dedicated readers and malformed map/save/demo fixtures are needed for
+   recoverable errors.
 3. **Rendering recovery limit.** The removed bitmap heartbeat was not a true
    presentation signal. Context-loss events now expose a recovery action, but
    stalls that emit no such event still need reliable presentation-level
@@ -589,3 +625,7 @@ step.
 7. **Campaign verification limit.** Map startup/rendering and demo checkpoints
    do not establish a complete Ultimate DOOM campaign playthrough or DOOM II
    coverage. Current assets were not changed as part of this architecture work.
+8. **Low-detail drawing.** The linuxdoom low-detail column and span defects
+   described under renderer and collision bounds fixes can stop or corrupt
+   low-detail frames. Fixing them requires replacing the tests that currently
+   preserve that behavior.

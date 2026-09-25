@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,7 +32,6 @@ fun GameScreen(
     onInput: (GameInput) -> Unit,
     showTouchControls: Boolean,
     onRestart: () -> Unit,
-    onChangeFile: () -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     val presenter = remember { FramePresenter() }
@@ -75,13 +73,11 @@ fun GameScreen(
             )
         }
         if (state.phase == GamePhase.Stopped || state.phase == GamePhase.Failed) {
-            Row(
+            TextButton(
+                onClick = onRestart,
                 modifier = Modifier.align(Alignment.BottomCenter)
                     .padding(24.dp).background(Color.Black.copy(alpha = 0.85f)),
-            ) {
-                TextButton(onClick = onRestart) { Text("RESTART", color = Color.White) }
-                TextButton(onClick = onChangeFile) { Text("CHOOSE GAME", color = Color.White) }
-            }
+            ) { Text("RESTART", color = Color.White) }
         }
     }
 }

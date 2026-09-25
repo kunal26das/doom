@@ -26,7 +26,7 @@ internal class CollisionState {
 
     var ceilingline: MapLine? = null
 
-    val spechit by lazy(LazyThreadSafetyMode.NONE) { arrayOfNulls<MapLine>(MAXSPECIALCROSS) }
+    var spechit: Array<MapLine?> = arrayOfNulls(MAXSPECIALCROSS)
 
     var numspechit = 0
 
